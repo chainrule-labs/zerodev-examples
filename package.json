@@ -1,0 +1,18 @@
+{
+	"type": "module",
+	"name": "your-package-name",
+	"version": "1.0.0",
+	"dependencies": {
+		"@alchemy/aa-core": "^3.12.3",
+		"@zerodev/ecdsa-validator": "^5.2.3",
+		"@zerodev/permissions": "^5.2.9",
+		"@zerodev/sdk": "^5.2.13",
+		"dotenv": "^16.4.5",
+		"permissionless": "^0.1.20",
+		"tslib": "^2.6.2",
+		"viem": "^2.9.26"
+	},
+	"devDependencies": {
+		"@types/node": "^20.12.7"
+	}
+}
