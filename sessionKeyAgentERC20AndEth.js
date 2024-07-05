@@ -31,6 +31,7 @@ import {
 	TEST_LOCKER_AGENT,
 	TEST_OWNER,
 	TEST_LOCKER_AGENT_PK,
+	TEST_BEAM_ADDRESS
 } from "./constants.js";
 
 // CONSTANTS
@@ -39,11 +40,16 @@ const paymaster = SEPOLIA_PAYMASTER_RPC;
 const bundler = SEPOLIA_BUNDLER_RPC;
 const chain = sepolia;
 const usdcAmountToSend = "0.001";
+const ethAmountToSend = "0.000015"
 
 // INSTANTIATE A PUBLIC CLIENT
 const publicClient = createPublicClient({
 	transport: http(bundler),
 });
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /*//////////////////////////////////////////////////////
 **           THIS HAPPENS ON THE FRONTEND             **
@@ -72,7 +78,7 @@ const getApproval = async (lockerAgent) => {
 	// const hotWalletNativePolicy = getNativePolicy(TEST_HOT_WALLET);
 	// const offrampErc20Policy = getErc20Policy(TEST_BEAM_ADDRESS);
 	// const offrampNativePolicy = getNativePolicy(TEST_BEAM_ADDRESS);
-	const combinedPolicy = getCombinedPolicy(TEST_HOT_WALLET)
+	const combinedPolicy = getCombinedPolicy(TEST_HOT_WALLET, TEST_BEAM_ADDRESS)
 
 	const permissionPlugin = await toPermissionValidator(publicClient, {
 		entryPoint,
@@ -103,7 +109,7 @@ const getApproval = async (lockerAgent) => {
 //////////////////////////////////////////////////////*/
 
 /*//////////////////////////////////////////////////////
-**           THIS HAPPENS ON THE BAKCEND              **
+**           THIS HAPPENS ON THE BACKEND              **
 //////////////////////////////////////////////////////*/
 const useSessionKey = async (approval, sessionKeySigner) => {
 	console.log("useSessionKey")
@@ -131,7 +137,7 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 	});
 
 	// TEST SENDING USDC TO HOT WALLET (SHOULD WORK)
-	console.log("Send USD to hot wallet")
+	console.log("Send USDC to hot wallet")
 	try {
 		const amountToSend = parseUnits(usdcAmountToSend, 6)
 		const functionData = {
@@ -139,7 +145,7 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 			functionName: "transfer",
 			args: [TEST_HOT_WALLET, amountToSend],
 		}
-		console.log("functionData:", functionData)
+		// console.log("functionData:", functionData)
 
 		const userOpHash1 = await kernelClient.sendUserOperation({
 			userOperation: {
@@ -188,6 +194,7 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 	// }
 
 	// TEST SENDING USDC TO UNAUTHORIZED ACCOUNT (SHOULD FAIL)
+	// await sleep(3000)
 	// try {
 	// 	const userOpHash3 = await kernelClient.sendUserOperation({
 	// 		userOperation: {
@@ -198,7 +205,7 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 	// 					data: encodeFunctionData({
 	// 						abi: erc20Abi,
 	// 						functionName: "transfer",
-	// 						args: [UNAUTHORIZED_ADDRESS, parseUnits("0.02", 6)],
+	// 						args: [UNAUTHORIZED_ADDRESS, parseUnits(usdcAmountToSend, 6)],
 	// 					}),
 	// 				},
 	// 			]),
@@ -213,12 +220,14 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 	// 	);
 	// }
 
+
 	// TEST SENDING ETH TO HOT WALLET (SHOULD WORK)
+	// await sleep(10000)
 	// try {
 	// 	const txHash1 = await kernelClient.sendTransaction({
 	// 		to: TEST_HOT_WALLET,
 	// 		data: pad("0x", { size: 4 }),
-	// 		value: parseUnits("0.000015", 18),
+	// 		value: parseUnits(ethAmountToSend, 18),
 	// 	});
 	// 	console.log("ETH to Hot Wallet - TxHash:", txHash1);
 	// } catch (error) {
