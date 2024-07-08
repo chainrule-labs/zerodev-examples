@@ -1,6 +1,7 @@
 import { getKernelAddressFromECDSA } from "@zerodev/ecdsa-validator";
 import { http, createPublicClient } from "viem";
 import { SEPOLIA_RPC } from "./constants.js";
+import { KERNEL_V3_1 } from "@zerodev/sdk/constants";
 
 // INSTANTIATE A PUBLIC CLIENT
 const publicClient = createPublicClient({
@@ -12,6 +13,8 @@ export async function getSmartAccountAddress(owner) {
 		publicClient,
 		eoaAddress: owner,
 		index: 0,
+		kernelVersion: KERNEL_V3_1,
+
 	};
 
 	return await getKernelAddressFromECDSA(params);

@@ -2,11 +2,14 @@
 	"type": "module",
 	"name": "your-package-name",
 	"version": "1.0.0",
+	"scripts": {
+		"start": "node sessionKeyAgentERC20AndEth.js"
+	},
 	"dependencies": {
 		"@alchemy/aa-core": "^3.12.3",
-		"@zerodev/ecdsa-validator": "^5.2.3",
-		"@zerodev/permissions": "^5.2.9",
-		"@zerodev/sdk": "^5.2.13",
+		"@zerodev/ecdsa-validator": "^5.3.1",
+		"@zerodev/permissions": "^5.3.2-alpha-0",
+		"@zerodev/sdk": "^5.3.2",
 		"dotenv": "^16.4.5",
 		"permissionless": "^0.1.20",
 		"tslib": "^2.6.2",
