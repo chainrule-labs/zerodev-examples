@@ -3,6 +3,7 @@ import {
 	createZeroDevPaymasterClient,
 	createKernelAccountClient,
 	addressToEmptyAccount,
+	getCustomNonceKeyFromString
 } from "@zerodev/sdk";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import {
@@ -46,10 +47,6 @@ const ethAmountToSend = "0.000015"
 const publicClient = createPublicClient({
 	transport: http(bundler),
 });
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /*//////////////////////////////////////////////////////
 **           THIS HAPPENS ON THE FRONTEND             **
@@ -130,14 +127,22 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 		entryPoint,
 		account: sessionKeyAccount,
 		chain,
-		bundlerTransport: http(bundler),
+		bundlerTransport: http(bundler, {
+			timeout: 30_000
+		  }),
 		middleware: {
 			sponsorUserOperation: kernelPaymaster.sponsorUserOperation,
 		},
 	});
 
+	const nonceKey1 = getCustomNonceKeyFromString(
+		"nonce1",
+		entryPoint,
+	  )
+	   
+	  const nonce1 = await sessionKeyAccount.getNonce(nonceKey1)
+
 	// TEST SENDING USDC TO HOT WALLET (SHOULD WORK)
-	console.log("Send USDC to hot wallet")
 	try {
 		const amountToSend = parseUnits(usdcAmountToSend, 6)
 		const functionData = {
@@ -156,9 +161,11 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 						data: encodeFunctionData(functionData),
 					},
 				]),
+				nonce: nonce1,
 			},
 		});
 		console.log("USDC to Hot Wallet - UserOpHash:", userOpHash1);
+
 	} catch (error) {
 		const status = error.status || "unknown status";
 		const details = error.details || "no details available";
@@ -168,107 +175,141 @@ const useSessionKey = async (approval, sessionKeySigner) => {
 	}
 
 	// TEST SENDING USDC TO BEAM OFFRAMP ACCOUNT (SHOULD WORK)
-	// try {
-	// 	const userOpHash2 = await kernelClient.sendUserOperation({
-	// 		userOperation: {
-	// 			callData: sessionKeyAccount.encodeCallData([
-	// 				{
-	// 					to: SEPOLIA_USDC_CONTRACT,
-	// 					value: BigInt(0),
-	// 					data: encodeFunctionData({
-	// 						abi: erc20Abi,
-	// 						functionName: "transfer",
-	// 						args: [TEST_BEAM_ADDRESS, parseUnits("0.02", 6)],
-	// 					}),
-	// 				},
-	// 			]),
-	// 		},
-	// 	});
-	// 	console.log("USDC to Beam Offramp - UserOpHash:", userOpHash2);
-	// } catch (error) {
-	// 	const status = error.status || "unknown status";
-	// 	const details = error.details || "no details available";
-	// 	console.error(
-	// 		`Failed to send USDC to Beam Offramp - Status: ${status}, Details: ${details}`
-	// 	);
-	// }
+	const nonceKey2 = getCustomNonceKeyFromString(
+		"nonce2",
+		entryPoint,
+	  )
+	   
+	  const nonce2 = await sessionKeyAccount.getNonce(nonceKey2)
+	try {
+		const userOpHash2 = await kernelClient.sendUserOperation({
+			userOperation: {
+				callData: sessionKeyAccount.encodeCallData([
+					{
+						to: SEPOLIA_USDC_CONTRACT,
+						value: BigInt(0),
+						data: encodeFunctionData({
+							abi: erc20Abi,
+							functionName: "transfer",
+							args: [TEST_BEAM_ADDRESS, parseUnits(usdcAmountToSend, 6)],
+						}),
+					},
+				]),
+				nonce: nonce2,
+			},
+		});
+		console.log("USDC to Beam Offramp - UserOpHash:", userOpHash2);
+	} catch (error) {
+		const status = error.status || "unknown status";
+		const details = error.details || "no details available";
+		console.error(
+			`Failed to send USDC to Beam Offramp - Status: ${status}, Details: ${details}`
+		);
+	}
 
 	// TEST SENDING USDC TO UNAUTHORIZED ACCOUNT (SHOULD FAIL)
-	// await sleep(3000)
-	// try {
-	// 	const userOpHash3 = await kernelClient.sendUserOperation({
-	// 		userOperation: {
-	// 			callData: sessionKeyAccount.encodeCallData([
-	// 				{
-	// 					to: SEPOLIA_USDC_CONTRACT,
-	// 					value: BigInt(0),
-	// 					data: encodeFunctionData({
-	// 						abi: erc20Abi,
-	// 						functionName: "transfer",
-	// 						args: [UNAUTHORIZED_ADDRESS, parseUnits(usdcAmountToSend, 6)],
-	// 					}),
-	// 				},
-	// 			]),
-	// 		},
-	// 	});
-	// 	console.log("USDC to Unauthorized Account - UserOpHash:", userOpHash3);
-	// } catch (error) {
-	// 	const status = error.status || "unknown status";
-	// 	const details = error.details || "no details available";
-	// 	console.error(
-	// 		`Failed to send USDC to Unauthorized Account (expected) - Status: ${status}, Details: ${details}`
-	// 	);
-	// }
+	try {
+		const nonceKey3 = getCustomNonceKeyFromString(
+			"nonce3",
+			entryPoint,
+		  )
+		   
+		  const nonce3 = await sessionKeyAccount.getNonce(nonceKey3)
+		const userOpHash3 = await kernelClient.sendUserOperation({
+			userOperation: {
+				callData: sessionKeyAccount.encodeCallData([
+					{
+						to: SEPOLIA_USDC_CONTRACT,
+						value: BigInt(0),
+						data: encodeFunctionData({
+							abi: erc20Abi,
+							functionName: "transfer",
+							args: [UNAUTHORIZED_ADDRESS, parseUnits(usdcAmountToSend, 6)],
+						}),
+					},
+				]),
+				nonce: nonce3,
+			},
+		});
+		console.log("USDC to Unauthorized Account - UserOpHash:", userOpHash3);
+	} catch (error) {
+		const status = error.status || "unknown status";
+		const details = error.details || "no details available";
+		console.error(
+			`Failed to send USDC to Unauthorized Account (expected) - Status: ${status}, Details: ${details}`
+		);
+	}
 
 
 	// TEST SENDING ETH TO HOT WALLET (SHOULD WORK)
-	// await sleep(10000)
-	// try {
-	// 	const txHash1 = await kernelClient.sendTransaction({
-	// 		to: TEST_HOT_WALLET,
-	// 		data: pad("0x", { size: 4 }),
-	// 		value: parseUnits(ethAmountToSend, 18),
-	// 	});
-	// 	console.log("ETH to Hot Wallet - TxHash:", txHash1);
-	// } catch (error) {
-	// 	const status = error.status || "unknown status";
-	// 	const details = error.details || "no details available";
-	// 	console.error(
-	// 		`Failed to send ETH to Hot Wallet - Status: ${status}, Details: ${details}`
-	// 	);
-	// }
+	try {
+		const nonceKey4 = getCustomNonceKeyFromString(
+			"nonce4",
+			entryPoint,
+		  )
+		   
+		  const nonce4 = await sessionKeyAccount.getNonce(nonceKey4)
+		const txHash1 = await kernelClient.sendTransaction({
+			to: TEST_HOT_WALLET,
+			data: pad("0x", { size: 4 }),
+			value: parseUnits(ethAmountToSend, 18),
+			nonce: nonce4
+		});
+		console.log("ETH to Hot Wallet - TxHash:", txHash1);
+	} catch (error) {
+		console.error("error:", error)
+		const status = error.status || "unknown status";
+		const details = error.details || "no details available";
+		console.error(
+			`Failed to send ETH to Hot Wallet - Status: ${status}, Details: ${details}`
+		);
+	}
 
 	// TEST SENDING ETH TO BEAM OFFRAMP ACCOUNT (SHOULD WORK)
-	// try {
-	// 	const txHash2 = await kernelClient.sendTransaction({
-	// 		to: TEST_BEAM_ADDRESS,
-	// 		data: pad("0x", { size: 4 }),
-	// 		value: parseUnits("0.000015", 18),
-	// 	});
-	// 	console.log("ETH to Beam Offramp - TxHash:", txHash2);
-	// } catch (error) {
-	// 	const status = error.status || "unknown status";
-	// 	const details = error.details || "no details available";
-	// 	console.error(
-	// 		`Failed to send ETH to Beam Offramp - Status: ${status}, Details: ${details}`
-	// 	);
-	// }
+	try {
+		const nonceKey5 = getCustomNonceKeyFromString(
+			"nonce4",
+			entryPoint,
+		  )
+		   
+		  const nonce5 = await sessionKeyAccount.getNonce(nonceKey5)
+		const txHash2 = await kernelClient.sendTransaction({
+			to: TEST_BEAM_ADDRESS,
+			data: pad("0x", { size: 4 }),
+			value: parseUnits(ethAmountToSend, 18),
+			nonce: nonce5
+		});
+		console.log("ETH to Beam Offramp - TxHash:", txHash2);
+	} catch (error) {
+		const status = error.status || "unknown status";
+		const details = error.details || "no details available";
+		console.error(
+			`Failed to send ETH to Beam Offramp - Status: ${status}, Details: ${details}`
+		);
+	}
 
 	// TEST SENDING ETH TO UNAUTHORIZED ACCOUNT (SHOULD FAIL)
-	// try {
-	// 	const txHash3 = await kernelClient.sendTransaction({
-	// 		to: UNAUTHORIZED_ADDRESS,
-	// 		data: pad("0x", { size: 4 }),
-	// 		value: parseUnits("0.000015", 18),
-	// 	});
-	// 	console.log("ETH to Unauthorized Account - TxHash:", txHash3);
-	// } catch (error) {
-	// 	const status = error.status || "unknown status";
-	// 	const details = error.details || "no details available";
-	// 	console.error(
-	// 		`Failed to send ETH to Unauthorized Account (expected) - Status: ${status}, Details: ${details}`
-	// 	);
-	// }
+	try {
+		const nonceKey6 = getCustomNonceKeyFromString(
+			"nonce6",
+			entryPoint,
+		  )
+		   
+		  const nonce6 = await sessionKeyAccount.getNonce(nonceKey6)
+		const txHash3 = await kernelClient.sendTransaction({
+			to: UNAUTHORIZED_ADDRESS,
+			data: pad("0x", { size: 4 }),
+			value: parseUnits("0.000015", 18),
+			nonce: nonce6
+		});
+		console.log("ETH to Unauthorized Account - TxHash:", txHash3);
+	} catch (error) {
+		const status = error.status || "unknown status";
+		const details = error.details || "no details available";
+		console.error(
+			`Failed to send ETH to Unauthorized Account (expected) - Status: ${status}, Details: ${details}`
+		);
+	}
 };
 //////////////////////////////////////////////////////*/
 //////////////////////////////////////////////////////*/
