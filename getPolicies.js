@@ -1,6 +1,6 @@
 import { ParamCondition, toCallPolicy } from "@zerodev/permissions/policies";
 import { erc20Abi, zeroAddress, maxInt256 } from "viem";
-import { SEPOLIA_USDC_CONTRACT, UNAUTHORIZED_ADDRESS } from "./constants.js";
+import { USE_USDC_CONTRACT, UNAUTHORIZED_ADDRESS } from "./constants.js";
 import {
 	CALL_POLICY_CONTRACT_V5_3_2,
 	serializePermissionAccount,
@@ -13,7 +13,7 @@ export const getErc20Policy = (toAddress) =>
 			{
 				// zeroAddress is not working
 				// Using zeroAddress means this policy applies to all ERC-20 tokens
-				target: SEPOLIA_USDC_CONTRACT,
+				target: USE_USDC_CONTRACT,
 
 				// BigInt(0) disallows transferring native when calling transfer()
 				valueLimit: BigInt(0),
