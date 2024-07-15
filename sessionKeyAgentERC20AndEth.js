@@ -13,7 +13,7 @@ import {
 } from "@zerodev/permissions";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
 import { toECDSASigner } from "@zerodev/permissions/signers";
-import { getErc20Policy, getCombinedPolicy } from "./getPolicies.js";
+import { getCombinedPolicy } from "./getPolicies.js";
 import { erc20Abi, parseUnits } from "viem";
 import { getSmartAccountAddress } from "./getCounterfactual.mjs";
 import { KERNEL_V3_1 } from "@zerodev/sdk/constants";
@@ -33,16 +33,17 @@ import {
 	TEST_LOCKER_AGENT,
 	TEST_OWNER,
 	TEST_LOCKER_AGENT_PK,
-	TEST_BEAM_ADDRESS
+	TEST_BEAM_ADDRESS,
+	ZERODEV_INDEX
 } from "./constants.js";
-
+import { encrypt } from "./crypto.js";
 
 
 /*//////////////////////////////////////////////////////
 **           THIS HAPPENS ON THE FRONTEND             **
 //////////////////////////////////////////////////////*/
-const getApproval = async (lockerAgent, publicClient, entryPoint) => {
-	const smartAccountAddress = await getSmartAccountAddress(TEST_OWNER);
+const getApproval = async (lockerAgent, publicClient, entryPoint, index) => {
+	const smartAccountAddress = await getSmartAccountAddress(TEST_OWNER, index);
 
 	console.log("\n\n");
 	console.log("Locker Account: ", smartAccountAddress);
@@ -304,7 +305,7 @@ const getApproval = async (lockerAgent, publicClient, entryPoint) => {
 //////////////////////////////////////////////////////*/
 //////////////////////////////////////////////////////*/
 
-const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, paymaster, bundler, chain, usdcAmountToSend, entryPoint) => {
+const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, paymaster, bundler, chain, usdcAmountToSend, entryPoint, index) => {
 	console.log("useSessionKey")
 	const sessionKeyAccount = await deserializePermissionAccount(
 		publicClient,
@@ -323,6 +324,7 @@ const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, payma
 		entryPoint,
 		account: sessionKeyAccount,
 		chain,
+		index,
 		bundlerTransport: http(bundler, {
 			timeout: 30_000
 		  }),
@@ -360,13 +362,22 @@ const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, payma
 				nonce: nonce1,
 			},
 		});
+
+		const bundlerClient = kernelClient.extend(
+			bundlerActions(ENTRYPOINT_ADDRESS_V07)
+		);
+
 		console.log("USDC to Hot Wallet - UserOpHash:", userOpHash1);
+		const txReceipt = await bundlerClient.waitForUserOperationReceipt({
+			hash: userOpHash1,
+		});
+		console.log("User operation receipt", txReceipt);
 
 	} catch (error) {
 		const status = error.status || "unknown status";
 		const details = error.details || "no details available";
 		console.error(
-			`Failed to send USDC to Hot Wallet - Status: ${status}, Details: ${details}`
+			`Failed to send USDC to Hot Wallet - Status: ${status}, Details: ${details}`, error
 		);
 	}
 
@@ -381,7 +392,7 @@ const main = async () => {
 	console.log("bundler:", bundler)
 	const chain = USE_CHAIN;
 	console.log("chain:", chain)
-	const usdcAmountToSend = "0.001";
+	const usdcAmountToSend = "0.00001";
 	const ethAmountToSend = "0.000015"
 
 	// INSTANTIATE A PUBLIC CLIENT
@@ -398,14 +409,14 @@ const main = async () => {
 
 	// ON THE FRONTEND
 	console.log("Getting approval from the frontend...");
-	const approvalSignature = await getApproval(TEST_LOCKER_AGENT, publicClient, entryPoint);
+	const approvalSignature = await getApproval(TEST_LOCKER_AGENT, publicClient, entryPoint, ZERODEV_INDEX);
 	// const approvalSignature = USE_APPROVAL_SIGNATURE
-	console.log("Approval Signature:", approvalSignature);
+	console.log("Approval Signature:", encrypt(approvalSignature));
 	
 
 	// ON THE BACKEND
 	console.log("Using session key on the backend...");
-	await useSessionKeyOnce(approvalSignature, sessionKeySigner, publicClient, paymaster, bundler, chain, usdcAmountToSend, entryPoint);
+	await useSessionKeyOnce(approvalSignature, sessionKeySigner, publicClient, paymaster, bundler, chain, usdcAmountToSend, entryPoint, ZERODEV_INDEX);
 };
 
 console.log("Running main function")
