@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { linea, lineaSepolia, sepolia } from "viem/chains";
+import { decrypt } from "./crypto.js";
 
 dotenv.config();
 
@@ -43,18 +44,24 @@ export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY
 export const ZERODEV_INDEX = BigInt(process.env.ZERODEV_INDEX)
 
 
-export const USE_APPROVAL_SIGNATURE = process.env.USE_APPROVAL_SIGNATURE;
+export const USE_APPROVAL_SIGNATURE = decrypt(
+	process.env.USE_ENCRYPTED_KEY, 
+	process.env.USE_IV, 
+	{
+		encriptionAlgorithm: "aes-256-cbc",
+		encriptionKey: ENCRYPTION_KEY
+	})
 
 /*
 	SET WHICH CHAIN TO USE
 */
 
 // Sepolia
-// export const USE_RPC = SEPOLIA_RPC;
-// export const USE_PAYMASTER_RPC = SEPOLIA_PAYMASTER_RPC;
-// export const USE_BUNDLER_RPC = SEPOLIA_BUNDLER_RPC;
-// export const USE_USDC_CONTRACT = SEPOLIA_USDC_CONTRACT;
-// export const USE_CHAIN = sepolia
+export const USE_RPC = SEPOLIA_RPC;
+export const USE_PAYMASTER_RPC = SEPOLIA_PAYMASTER_RPC;
+export const USE_BUNDLER_RPC = SEPOLIA_BUNDLER_RPC;
+export const USE_USDC_CONTRACT = SEPOLIA_USDC_CONTRACT;
+export const USE_CHAIN = sepolia
 
 // Linea
 // export const USE_RPC = LINEA_RPC;
@@ -64,8 +71,8 @@ export const USE_APPROVAL_SIGNATURE = process.env.USE_APPROVAL_SIGNATURE;
 // export const USE_CHAIN = linea
 
 // Linea Sepolia
-export const USE_RPC = LINEA_SEPOLIA_RPC;
-export const USE_PAYMASTER_RPC = LINEA_SEPOLIA_PAYMASTER_RPC;
-export const USE_BUNDLER_RPC = LINEA_SEPOLIA_BUNDLER_RPC;
-export const USE_USDC_CONTRACT = LINEA_SEPOLIA_USDC_CONTRACT;
-export const USE_CHAIN = lineaSepolia
+// export const USE_RPC = LINEA_SEPOLIA_RPC;
+// export const USE_PAYMASTER_RPC = LINEA_SEPOLIA_PAYMASTER_RPC;
+// export const USE_BUNDLER_RPC = LINEA_SEPOLIA_BUNDLER_RPC;
+// export const USE_USDC_CONTRACT = LINEA_SEPOLIA_USDC_CONTRACT;
+// export const USE_CHAIN = lineaSepolia

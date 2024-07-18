@@ -1,6 +1,20 @@
 import crypto from "crypto";
 import { ENCRYPTION_KEY } from "./constants.js";
 
+export function decrypt(
+	encryptedText,
+	iv,
+	configuration
+) {
+	const decipher = crypto.createDecipheriv(
+		configuration.encriptionAlgorithm,
+		Buffer.from(configuration.encriptionKey, "base64"),
+		Buffer.from(iv, "base64")
+	);
+	let decrypted = decipher.update(encryptedText, "hex", "utf8");
+	decrypted += decipher.final("utf8");
+	return decrypted;
+}
 
 export function encrypt(text) {
 	const iv = crypto.randomBytes(16); // Initialization vector
