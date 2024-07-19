@@ -16,7 +16,11 @@ export const LINEA_RPC = process.env.LINEA_RPC;
 export const LINEA_PAYMASTER_RPC = process.env.LINEA_PAYMASTER_RPC;
 export const LINEA_BUNDLER_RPC = process.env.LINEA_BUNDLER_RPC;
 export const LINEA_USDC_CONTRACT =
-	"0x176211869cA2b568f2A7D4EE941E073a821EE1ff";
+// USDC.e works: https://lineascan.build/address/0x176211869cA2b568f2A7D4EE941E073a821EE1ff
+// "0x176211869cA2b568f2A7D4EE941E073a821EE1ff";
+
+// axlUSDC fails: https://lineascan.build/address/0xEB466342C4d449BC9f53A865D5Cb90586f405215
+"0xEB466342C4d449BC9f53A865D5Cb90586f405215";
 
 // Linea Sepolia
 export const LINEA_SEPOLIA_RPC = process.env.LINEA_SEPOLIA_RPC;
@@ -57,18 +61,18 @@ export const USE_APPROVAL_SIGNATURE = decrypt(
 */
 
 // Sepolia
-export const USE_RPC = SEPOLIA_RPC;
-export const USE_PAYMASTER_RPC = SEPOLIA_PAYMASTER_RPC;
-export const USE_BUNDLER_RPC = SEPOLIA_BUNDLER_RPC;
-export const USE_USDC_CONTRACT = SEPOLIA_USDC_CONTRACT;
-export const USE_CHAIN = sepolia
+// export const USE_RPC = SEPOLIA_RPC;
+// export const USE_PAYMASTER_RPC = SEPOLIA_PAYMASTER_RPC;
+// export const USE_BUNDLER_RPC = `${SEPOLIA_BUNDLER_RPC}?provider=ALCHEMY`;
+// export const USE_USDC_CONTRACT = SEPOLIA_USDC_CONTRACT;
+// export const USE_CHAIN = sepolia
 
 // Linea
-// export const USE_RPC = LINEA_RPC;
-// export const USE_PAYMASTER_RPC = LINEA_PAYMASTER_RPC;
-// export const USE_BUNDLER_RPC = LINEA_BUNDLER_RPC;
-// export const USE_USDC_CONTRACT = LINEA_USDC_CONTRACT;
-// export const USE_CHAIN = linea
+export const USE_RPC = LINEA_RPC;
+export const USE_PAYMASTER_RPC = LINEA_PAYMASTER_RPC;
+export const USE_BUNDLER_RPC =`${LINEA_BUNDLER_RPC}?provider=ALCHEMY`;
+export const USE_USDC_CONTRACT = LINEA_USDC_CONTRACT;
+export const USE_CHAIN = linea
 
 // Linea Sepolia
 // export const USE_RPC = LINEA_SEPOLIA_RPC;

@@ -11,7 +11,7 @@ import {
 	serializePermissionAccount,
 	toPermissionValidator,
 } from "@zerodev/permissions";
-import { ENTRYPOINT_ADDRESS_V07 } from "permissionless";
+import { ENTRYPOINT_ADDRESS_V07, bundlerActions } from "permissionless"
 import { toECDSASigner } from "@zerodev/permissions/signers";
 import { getCombinedPolicy } from "./getPolicies.js";
 import { erc20Abi, parseUnits } from "viem";
@@ -82,6 +82,7 @@ const getApproval = async (lockerAgent, publicClient, entryPoint, index) => {
 	});
 
 	const sessionKeyAccount = await createKernelAccount(publicClient, {
+		index,
 		kernelVersion: KERNEL_V3_1,
 		entryPoint,
 		plugins: {
@@ -324,9 +325,9 @@ const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, payma
 		entryPoint,
 		account: sessionKeyAccount,
 		chain,
-		index,
+		// index,
 		bundlerTransport: http(bundler, {
-			timeout: 30_000
+			timeout: 60_000
 		  }),
 		middleware: {
 			sponsorUserOperation: kernelPaymaster.sponsorUserOperation,
@@ -370,6 +371,7 @@ const useSessionKeyOnce = async (approval, sessionKeySigner, publicClient, payma
 		console.log("USDC to Hot Wallet - UserOpHash:", userOpHash1);
 		const txReceipt = await bundlerClient.waitForUserOperationReceipt({
 			hash: userOpHash1,
+			timeout: 60_000,
 		});
 		console.log("User operation receipt", txReceipt);
 
